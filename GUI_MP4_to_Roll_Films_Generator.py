@@ -64,10 +64,10 @@ def gen_pdf():
     c = canvas.Canvas('watermark.pdf')
 
     # Draw the image at x, y. I positioned the x,y to be where i like here
-    path = 'C:/Users/delor/Downloads/Roll Film/Frames/{0}.jpg'
+    path = '/Frames/{0}.jpg'
     x = 45.67
     y = 794.85
-    num_frames = len([name for name in os.listdir('C:/Users/delor/Downloads/Roll Film/Frames/')])
+    num_frames = len([name for name in os.listdir('/Roll Film/Frames/')])
 
     if num_frames > 224:
         num_frames = 224
@@ -113,7 +113,7 @@ def gen_pdf():
 def UploadAction():
     filename = filedialog.askopenfilename(filetypes=[("MP4 files", "*.mp4")])
     print('Selected:', filename)
-    output_loc = 'C:/Users/delor/Downloads/Roll Film/Frames/'
+    output_loc = '/Roll Film/Frames/'
     video_to_frames(filename, output_loc)
     gen_pdf()
 
