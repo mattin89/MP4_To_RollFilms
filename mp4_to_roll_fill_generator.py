@@ -48,7 +48,7 @@ def video_to_frames(input_loc, output_loc):
 
 def gen_pdf():
 
-    path = 'C:/Users/delor/Downloads/Roll Film/{0}.jpg'
+    path = '/Roll Film/{0}.jpg'
     pdf = PdfFileWriter()
     x = 50
     y = 800
@@ -73,7 +73,7 @@ def gen_pdf():
 
 if __name__=="__main__":
 
-    input_loc = 'C:/Users/delor/Downloads/Roll Film/Snapchat-1045260453.mp4'
-    output_loc = 'C:/Users/delor/Downloads/Roll Film/'
+    input_loc = '/Roll Film/Snapchat-1045260453.mp4'
+    output_loc = '/Roll Film/'
     video_to_frames(input_loc, output_loc)
     gen_pdf()
