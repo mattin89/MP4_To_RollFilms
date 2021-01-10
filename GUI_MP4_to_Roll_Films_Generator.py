@@ -3,13 +3,14 @@ import tkinter.font as tkFont
 from tkinter import *
 from tkinter import messagebox
 from tkinter import filedialog
-from tkinter.filedialog import asksaveasfile
+from tkinter.filedialog import asksaveasfilename
+import ttk
 from PIL import Image, ImageTk
 import cv2
 import time
 import os, os.path
 from reportlab.pdfgen import canvas
-from PyPDF2 import PdfFileWriter, PdfFileReader
+from PyPDF2 import PdfFileWriter, PdfFileReader, PdfFileMerger
 
 
 def video_to_frames(input_loc, output_loc):
@@ -36,6 +37,10 @@ def video_to_frames(input_loc, output_loc):
     print ("Converting video..\n")
     # Start converting the video
     while cap.isOpened():
+        k = int((count/video_length)*30)
+        print(k)
+        progressbar['value'] = k
+        root.update_idletasks()
         # Extract the frame
         ret, frame = cap.read()
         # Write the results back to output location.
@@ -61,7 +66,8 @@ def gen_pdf():
             None
         """
     # Create the watermark from an image
-    c = canvas.Canvas('watermark.pdf')
+    path_watermark = 'watermark{0}.pdf'
+    #c = canvas.Canvas('watermark.pdf')
 
     # Draw the image at x, y. I positioned the x,y to be where i like here
     path = 'Frames/{0}.jpg'
@@ -69,10 +75,18 @@ def gen_pdf():
     y = 794.85
     num_frames = len([name for name in os.listdir('Frames/')])
 
-    if num_frames > 224:
-        num_frames = 224
-
+    #if num_frames > 224:
+    #    num_frames = 224
+    pages = 1
+    columns = 1
+    new_page = 1
+    never_saved = 1
+    list_canvas = []
     for num in range(1, num_frames):
+
+        if new_page:
+            c = canvas.Canvas(path_watermark.format(pages))
+            new_page = 0
 
         try:
             c.drawImage(path.format(num), x, y, width=27.71, height=17.5)
@@ -81,14 +95,31 @@ def gen_pdf():
             if num % 28 == 0:
                 x += 68.033
                 y = 794.85
+                columns += 1
+
+            if columns == 9:
+                x = 45.67
+                pages += 1
+                new_page = 1
+                columns = 1
+                c.save()
+                list_canvas.append(c)
+                never_saved = 0
 
         except IOError:
             print("Couldn't use frame number " + str(num))
 
-    c.save()
+        k = 30 + int((num / num_frames) * 30)
+        print(k)
+        progressbar['value'] = k
+        root.update_idletasks()
+
+    if never_saved:
+        c.save()
+        list_canvas.append(c)
 
     # Get the watermark file you just created
-    watermark = PdfFileReader(open("watermark.pdf", "rb"))
+    #watermark = PdfFileReader(open("watermark.pdf", "rb"))
 
     # Get our files ready
     output_file = PdfFileWriter()
@@ -98,17 +129,58 @@ def gen_pdf():
     page_count = input_file.getNumPages()
 
     # Go through all the input file pages to add a watermark to them
-    for page_number in range(page_count):
-        print("Watermarking page {} of {}".format(page_number, page_count))
+    for n in range(len(list_canvas)):
+
+        # Get the watermark file you just created
+        #with open(path_watermark.format(n+1), "rb") as file:
+        file = open(path_watermark.format(n+1), "rb")
+        #file = open(path_watermark.format(n+1), "rb")
+        watermark = PdfFileReader(file)
+        print("Watermarking page {} of {}".format(n+1, len(list_canvas)))
+
         # merge the watermark with the page
-        input_page = input_file.getPage(page_number)
+        input_page = input_file.getPage(0)
         input_page.mergePage(watermark.getPage(0))
+
         # add page from input file to output document
         output_file.addPage(input_page)
+        path_merged = 'merged_document{0}.pdf'
+        f = open(path_merged.format(n+1), "wb")
+        output_file.write(f)
+        f.close()
+        file.close()
 
+        k = 70 + int((n / len(list_canvas)) * 30)
+        print(k)
+        progressbar['value'] = k
+
+    merger = PdfFileMerger()
+
+    for i in range(len(list_canvas)):
+        with open(path_merged.format(i + 1), "rb") as file2:
+            merger.append(PdfFileReader(file2), pages=(0, 1))
     # finally, write "output" to document-output.pdf
-    with open("document-output.pdf", "wb") as outputStream:
-        output_file.write(outputStream)
+    #file3 = open("document-output.pdf","w")
+    saveHere = asksaveasfilename(filetypes = [("PDF files", "*.pdf")], defaultextension = [("PDF files", "*.pdf")])
+    merger.write(os.path.join(saveHere))
+    #with open("document-output.pdf", "wb") as outputStream:
+    #    output_file.write(outputStream)
+
+    #Deleting all files created for the conversion
+    dir_name = "Frames/"
+    test = os.listdir(dir_name)
+    for item in test:
+        if item.endswith(".jpg"):
+            os.remove(os.path.join(dir_name, item))
+
+    dir_name = "."
+    test = os.listdir(dir_name)
+    for item in test:
+        if item.startswith("merged_document") or item.startswith("watermark"):
+            os.remove(os.path.join(dir_name, item))
+
+    print("Done")
+    progressbar['value'] = 100
 
 def UploadAction():
     filename = filedialog.askopenfilename(filetypes=[("MP4 files", "*.mp4")])
@@ -143,7 +215,9 @@ c.create_image(400, 100, image=img3, anchor=NW)
 
 button = tk.Button(root, text='Upload MP4 file', height=10, width=40, command=UploadAction)
 button.place(x=500,y =400)
-
 button.pack()
+
+progressbar = ttk.Progressbar(root, length=300, orient=HORIZONTAL, mode="determinate")
+progressbar.pack()
 
 root.mainloop()
