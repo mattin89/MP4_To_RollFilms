@@ -38,7 +38,6 @@ def video_to_frames(input_loc, output_loc):
     # Start converting the video
     while cap.isOpened():
         k = int((count/video_length)*30)
-        print(k)
         progressbar['value'] = k
         root.update_idletasks()
         # Extract the frame
@@ -109,8 +108,7 @@ def gen_pdf():
         except IOError:
             print("Couldn't use frame number " + str(num))
 
-        k = 30 + int((num / num_frames) * 30)
-        print(k)
+        k = 40 + int((num / num_frames) * 30)
         progressbar['value'] = k
         root.update_idletasks()
 
@@ -150,8 +148,7 @@ def gen_pdf():
         f.close()
         file.close()
 
-        k = 70 + int((n / len(list_canvas)) * 30)
-        print(k)
+        k = 80 + int((n / len(list_canvas)) * 30)
         progressbar['value'] = k
 
     merger = PdfFileMerger()
